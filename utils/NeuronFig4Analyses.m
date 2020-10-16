@@ -455,7 +455,7 @@ if whichstudy >1
             psd_replay_wb = pinv(NN.nnmf_coh_specs')*psd_replay;
             for ii=1:size(NN.nnmf_coh_specs,1)-1
                 toplot = psd_replay_wb(ii,:);
-                toplot(toplot<prctile(toplot,75))=NaN;
+                toplot(toplot<prctile(toplot,90))=NaN;
                 toplot(toplot<0)=realmin;
                 %CL = max(abs(squash(psd_replay))) * [0 1];
                 %f2 = plot_surface_4way(parc,psd_replay(25,:),0,false,'enclosing',[],[],[]);
