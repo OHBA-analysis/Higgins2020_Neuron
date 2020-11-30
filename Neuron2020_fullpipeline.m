@@ -4,7 +4,7 @@
 %% SETUP THE MATLAB PATHS
 % make sure that fieldtrip and spm are not in your matlab path
 %     
-basedir='/Users/chiggins/';
+basedir = '/Users/chiggins/';
 cd([basedir 'Documents/MATLAB/osl/osl-core']);
 osl_startup;
 wd = [basedir,'data/Neuron2020/'];
@@ -15,7 +15,7 @@ addpath( fullfile(osldir,'ohba-external','fmt') );
 download_path = [basedir,'Documents/MATLAB/Neuron2020/'];
 addpath(genpath(download_path));
 
-TESTRUN = true; % when this is on, just run full script for one subject only
+TESTRUN = false; % when this is on, just run full script for one subject only
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% generic filename / parameter details:
@@ -102,26 +102,33 @@ S.do_prepare=0;
 S.do_hmm=1; 
 S.do_spectral_estimation=0;
 
+
+% The model inference is sensitive to local minima - therefore we run a
+% number of models and keep the one with the lowest free energy:
+Nruns = 5;
+
 for whichstudy = 1:3
     
-    spmfilesdir=[wd,session_name{whichstudy} ];
-    preproc_name='250Hz/';
-    S.preproc_name=preproc_name;
-    S.session_name=session_name{whichstudy}; 
-    S.spmfilesdir=spmfilesdir;
+    spmfilesdir = [wd,session_name{whichstudy} ];
+    preproc_name = '250Hz/';
+    S.preproc_name = preproc_name;
+    S.session_name = session_name{whichstudy}; 
+    S.spmfilesdir = spmfilesdir;
         
     if whichstudy==1
+        % note that naive models are trained on study 1 data; for studies 2
+        % and 3 we just fit the models learned from study 1
         if isfield(S,'templateHMM')
             S = rmfield(S,'templateHMM');
         end
-        for i=1:Nruns
-            S.hmm_name=int2str(i); 
+        for i = 1:Nruns
+            S.hmm_name = int2str(i); 
             disp(S);
             [hmm hmmfname hmmoptions settings_prepare] = run_full_hmm_pipeline_neuron2020edit(S);
             disp(hmmfname);
         end
     else
-        for i=1:Nruns
+        for i = 1:Nruns
             templatestring = 'usingtemplate';
             S.hmm_name = [int2str(i),templatestring];
             S.templateHMM = [wd,session_name{1},preproc_name,'/hmm_1to45hz/'...
@@ -158,17 +165,17 @@ save([wd,'bestmodel.mat'],'bestmodel','FEcompare');
 bestmodel=5;
 K=12;
 
-for whichstudy=3
+for whichstudy=1:3
     
-    %NeuronFig2Analyses;
+    NeuronFig2Analyses;
     clearvars -except K whichstudy bestmodel wd session_name nscans Fs_to_run nSj
     NeuronFig3Analyses
     clearvars -except K whichstudy bestmodel wd session_name nscans Fs_to_run nSj
     NeuronFig4Analyses
     clearvars -except K whichstudy bestmodel wd session_name nscans Fs_to_run nSj
-%     if whichstudy>1
-%         NeuronFig5Analyses
-%         clearvars -except K whichstudy bestmodel wd session_name nscans Fs_to_run nSj
-%     end
+    if whichstudy>1
+        NeuronFig5Analyses
+        clearvars -except K whichstudy bestmodel wd session_name nscans Fs_to_run nSj
+    end
     close all;
 end
