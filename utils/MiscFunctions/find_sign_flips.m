@@ -189,7 +189,11 @@ for subnum = 1:nsubs
     % create new object
     S=[];
     S.D=Dsnew{subnum};
-    S.outfile = prefix(fullfile(Ds{subnum}),Sin.prefix);
+    if ~isfield(Sin,'outputdir')
+        S.outfile = prefix(fullfile(Ds{subnum}),Sin.prefix);
+    else
+        S.outfile = prefix(fullfile(Sin.outputdir,Dp.fname),Sin.prefix);
+    end
     Dsnew{subnum}=spm_eeg_copy(S);
     
     sign_flipped_spm_fnames{subnum}=Dsnew{subnum}.fullfile;
