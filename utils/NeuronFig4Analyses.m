@@ -53,7 +53,7 @@ mtfilename = [studydir, '/hmm_1to45hz/hmm',template_string,'_parc_giles_symmetri
 if ~exist(mtfilename)
     error('Soft state timecourses not found - rerun this analysis!');
 end
-    
+
 [psd,coh] = loadMTspect(studydir,K,template_string);
 
 % check for bad subjects:
@@ -149,6 +149,7 @@ if ~isfile([nnmf_outfile,'.mat'])
 else
     load( nnmf_outfile );
 end
+
 
 %% Spectral Mode Power Plots
 

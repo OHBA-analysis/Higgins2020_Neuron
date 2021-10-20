@@ -1,5 +1,13 @@
-function [psd,coh,f] = loadMTspect(basedir,K,templatestring);
-
+function [psd,coh,f] = loadMTspect(basedir,K,templatestring,permuteSTCs);
+if nargin<4
+    permuteSTCs = false; % note this is a flag for testing whether the estimation is biased; if true, it scrambles the STCs
+end
+if permuteSTCs
+    PMstring = '_permuted';
+else
+    PMstring = '';
+end
+    
 hard = 0; % 1 for hard state assignment, 0 for soft
 if hard
      fulldir = [basedir, '/hmm_1to45hz/hmm',templatestring,'_parc_giles_symmetric__pcdim80_voxelwise_embed14_K',int2str(K),'_big1_dyn_modelhmm_store/',...
@@ -30,7 +38,7 @@ if hard
     f = state_netmats{1}.state{1}.spectramt.f;
 else
     fulldir = [basedir, '/hmm_1to45hz/hmm',templatestring,'_parc_giles_symmetric__pcdim80_voxelwise_embed14_K',int2str(K),'_big1_dyn_modelhmm_store/',...
-        'state_netmats_mtsess_2_vn0_soft_global0.mat'];
+        PMstring,'state_netmats_mtsess_2_vn0_soft_global0.mat'];
     if exist(fulldir)
         load(fulldir);
     else
@@ -41,7 +49,7 @@ else
         load(hmmfile);
         
         mtfilename = [basedir, '/hmm_1to45hz/hmm',templatestring,'_parc_giles_symmetric__pcdim80_voxelwise_embed14_K',int2str(K),'_big1_dyn_modelhmm_store/',...
-            'state_netmats_mtsess_2_vn0_soft_global0.mat'];
+            PMstring,'state_netmats_mtsess_2_vn0_soft_global0.mat'];
         
         S=[];
         S.parcellated_filenames=hmm.data_files;
@@ -82,7 +90,11 @@ else
 
         for subnum=1:length(hmm.data_files)
             disp(['Computing for subj ' num2str(subnum)]);
-            Dp = spm_eeg_load((hmm.data_files{subnum}));
+            Dfname = hmm.data_files{subnum};
+            if contains(Dfname,'WooliePipeline')
+                Dfname = strrep(Dfname,'/Users/chiggins/data/YunzheData/Replaydata4Cam/WooliePipeline/spm/sept2019_eo',basedir);
+            end
+            Dp = spm_eeg_load(Dfname);
             embed.tres=1/Dp.fsample;
 
             datap = osl_teh_prepare_data(Dp,normalisation,logtrans,[],embed);
@@ -91,14 +103,16 @@ else
             hmm_sub = hmm; 
             hmm_sub.statepath = hmm.statepath(hmm.subj_inds==subnum); 
             hmm_sub.gamma = hmm.gamma(hmm.subj_inds==subnum,:);
-
+            if permuteSTCs
+                hmm_sub.gamma = [flipud(hmm_sub.gamma),ones(length(hmm_sub.gamma),1)];
+            end
             fit = hmmspectramt(datap,length(datap),hmm_sub.gamma,options_mt);
             if subnum==1
                 f = fit.state(1).f;
                 psd=zeros(length(hmm.data_files),hmm_sub.K,length(f),nparcels,nparcels);
                 coh=zeros(length(hmm.data_files),hmm_sub.K,length(f),nparcels,nparcels);
             end
-            for jj = 1:hmm_sub.K
+            for jj = 1:length(fit.state)
                 psd(subnum,jj,:,:,:) = fit.state(jj).psd;
                 coh(subnum,jj,:,:,:) = fit.state(jj).coh;
             end

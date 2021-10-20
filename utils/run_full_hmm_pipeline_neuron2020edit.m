@@ -188,6 +188,9 @@ hmmoptions.prepare.savePCmaps       = 0;
 %hmmoptions.prepare.max_ntpts        = 40000;
 
 hmmoptions.hmm.dynamic_model_type   = 'hmm';
+if isfield(S,'dynamic_model_type')
+    hmmoptions.hmm.dynamic_model_type   = S.dynamic_model_type;
+end
 %hmmoptions.hmm.dynamic_model_type   = 'vbrt';
 
 hmmoptions.hmm.initcyc              = 60;

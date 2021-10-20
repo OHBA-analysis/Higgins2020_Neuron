@@ -4,7 +4,9 @@ for i=1:hmm.K
     hmm_new.state(i) = hmm.state(new_state_ordering(i));
     hmm_new.Dir_alpha(i) = hmm.Dir_alpha(new_state_ordering(i));
     hmm_new.Pi(i) = hmm.Pi(new_state_ordering(i));
-    hmm_new.gamma(:,i) = hmm.gamma(:,new_state_ordering(i));
+    if isfield(hmm,'gamma')
+        hmm_new.gamma(:,i) = hmm.gamma(:,new_state_ordering(i));
+    end
     if isfield(hmm,'statepath')
         hmm_new.statepath(hmm.statepath==new_state_ordering(i)) =i;
     end

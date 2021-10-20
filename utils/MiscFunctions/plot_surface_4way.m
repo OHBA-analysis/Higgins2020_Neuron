@@ -82,6 +82,8 @@ function hfig=plot_surface_4way(p,data,surface_inflation,single_plot,interptype,
         cm2 = cat(2,linspace(0, 0 ,63)',linspace(1, 0 ,63)',linspace(1, .5 ,63)');
         %cm = cat(1,cm2,[.6 .6 .6],cm);
         cm = cat(1,flipud(cm2),flipud(cm));
+        
+        cm = parula(size(cm,1));
     else
         cm = cat(2,linspace(.5, 1 ,63)',linspace(0, 1 ,63)',linspace(0, 0 ,63)');
         c=flipud(cm);
