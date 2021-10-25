@@ -187,24 +187,53 @@ for subnum = 1:nsubs
     Dsnew{subnum}=Dp;
     
     % create new object
-    S=[];
-    S.D=Dsnew{subnum};
+%     S=[];
+%     S.D=Dsnew{subnum};
     if ~isfield(Sin,'outputdir')
-        S.outfile = prefix(fullfile(Ds{subnum}),Sin.prefix);
+        outfile = prefix(fullfile(Ds{subnum}),Sin.prefix);
     else
-        S.outfile = prefix(fullfile(Sin.outputdir,Dp.fname),Sin.prefix);
+        outfile = prefix(fullfile(Sin.outputdir,Dp.fname),Sin.prefix);
     end
-    Dsnew{subnum}=spm_eeg_copy(S);
-    
-    sign_flipped_spm_fnames{subnum}=Dsnew{subnum}.fullfile;
+%     Dsnew{subnum}=spm_eeg_copy(S);
+
+% annoying bug for some file types - need to clone rather than copy:
+   % Save data to new MEEG object
+    data = Dp(:,:,:);
+        Dnode = clone(montage(Dp,'switch',0),outfile,[num_nodes,Dp.nsamples,Dp.ntrials]);
+        parcel_chantype='VE';
+        Dnode = chantype(Dnode,1:Dnode.nchannels,parcel_chantype);
+        Dnode(:,:,:) = data;
+
+        % copy badtrials
+        badtrials=Dp.badtrials;
+        if ~isempty(badtrials)
+            Dnode = Dnode.badtrials(1:length(badtrials),badtrials);
+        end
+
+        % copy events, but need to change ev.value to be 'VE' for all artefact
+        % events, so that bad segments get passed through
+        ev = Dp.events;
+        for ee=1:length(ev)
+            if strncmp(ev(ee).type,'artefact',8)
+                ev(ee).value=parcel_chantype;
+            end
+        end
+        Dnode = Dnode.events(1,ev);
+
+        
+    %sign_flipped_spm_fnames{subnum}=Dsnew{subnum}.fullfile;
+    sign_flipped_spm_fnames{subnum}=Dnode.fullfile;
     
     for pp=1:size(Dp,1)
-        for tri=1:size(Dsnew{subnum},3)
-            Dsnew{subnum}(pp,:,tri)=Dp(pp,:,tri)*best_flips(pp,subnum);            
+        for tri=1:size(Dp,3)
+            if best_flips(pp,subnum)~=1
+                Dnode(pp,:,tri)=Dp(pp,:,tri)*best_flips(pp,subnum);            
+            end
         end;       
     end;
+    Dnode.save;
     
-    Dsnew{subnum}.save;
+    Dsnew{subnum} = Dnode;
 end
 
 %% compute cov after flipping
