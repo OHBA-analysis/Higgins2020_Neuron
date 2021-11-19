@@ -49,7 +49,7 @@ num_subj=size(netmats,3);
 flips=ones(num_nodes,num_subj);
    
 % initialise
-max_num_nodes_to_change=20;
+max_num_nodes_to_change=min([20,num_nodes]);
 naccept=0;
 nreject=0;
 sigma=zeros(num_subj,1);
